@@ -1,0 +1,68 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+repositories {
+    jcenter()
+    mavenCentral()
+    maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url "https://oss.sonatype.org/content/groups/public/"}
+}
+
+buildscript {
+    ext {
+        serenity_version = '1.9.5'
+        serenity_cucumber_version = '1.9.4'
+        //serenity_jira_version = '1.8.0'
+    }
+
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("net.serenity-bdd:serenity-gradle-plugin:$serenity_version")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'net.serenity-bdd.aggregator'
+
+dependencies {
+
+    testCompile 'net.serenity-bdd:serenity-cucumber:' +  serenity_cucumber_version
+    testCompile 'net.serenity-bdd:serenity-core:' + serenity_version
+    testCompile "net.serenity-bdd:serenity-junit:$serenity_version"
+    testCompile 'net.serenity-bdd:serenity-rest-assured:' + serenity_version
+    testCompile 'net.serenity-bdd:serenity-screenplay:' + serenity_version
+    testCompile 'net.serenity-bdd:serenity-screenplay-webdriver:' + serenity_version
+    testCompile 'net.serenity-bdd:serenity-report-resources:' + serenity_version
+    testCompile 'org.seleniumhq.selenium:selenium-api:3.9.0'
+    testCompile 'com.googlecode.lambdaj:lambdaj:2.3.3'
+    testCompile 'org.slf4j:slf4j-simple:1.7.21'
+    testCompile 'org.skyscreamer:jsonassert:1+'
+    testCompile 'com.jayway.jsonpath:json-path:2+'
+    testCompile 'org.hamcrest:hamcrest-all:1.3'
+    testCompile 'org.assertj:assertj-core:3+'
+    testCompile 'org.assertj:assertj-db:1+'
+    testCompile 'org.assertj:assertj-joda-time:2+'
+    testCompile 'org.postgresql:postgresql:42.1.4'
+}
+
+test {
+    systemProperty 'tags', System.properties['tags']
+
+    // Ensure reports from a previous run are cleared up
+    dependsOn clearReports
+    // Ensure integration tests are always run. Will never report as 'UP-TO-DATE'
+    outputs.upToDateWhen {false}
+    // ensure Gradle ignores failing tests so that the Serenity Aggregation step executes
+    ignoreFailures = true
+    // Ensure Serenity aggregation is run after, and if, integration tests are run
+    finalizedBy aggregate
+}
+
+defaultTasks 'test'
+
+gradle.startParameter.continueOnFailure = true
